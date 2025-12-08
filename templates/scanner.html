@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Scanner d’entrée</title>
+  
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 640px;
+      margin: 40px auto;
+      background: #ffffff;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+      padding: 24px;
+      border: 2px solid #f0c655;
+    }
+    h1 {
+      text-align: center;
+      color: #000000;
+      margin-bottom: 16px;
+    }
+    p {
+      color: #333;
+      line-height: 1.5;
+    }
+    #reader {
+      margin: 20px auto;
+      max-width: 360px;
+      border: 2px solid #f0c655;
+      border-radius: 8px;
+    }
+    .result-box {
+      margin-top: 20px;
+      padding: 12px;
+      border-radius: 6px;
+      background: #fafafa;
+      border: 1px solid #ddd;
+    }
+    .status-ok {
+      color: #0b8043;
+      font-weight: 700;
+    }
+    .status-error {
+      color: #b00020;
+      font-weight: 700;
+    }
+  </style>
+
+  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+</head>
+<body>
+  <div class="container">
+    <h1>Scanner Concours 9999</h1>
+    <p>Autoriser l'accés à la camera</p>
+    <div id="reader" style="width: 400px; max-width: 100%;"></div>
+
+    <div id="result" class="result-box">
+      <p>Statut : <span id="status">En attente d’un scan…</span></p>
+      <p id="details"></p>
+      <p>Nombres de codes restants : <span id="remaining">-</span></p>
+    </div>
+  </div>
+
+  <script>
+    function onScanSuccess(decodedText, decodedResult) {
+      html5QrcodeScanner.clear();
+      document.getElementById("status").textContent = "Vérification du code…";
+
+      fetch("{{ url_for('api_validate') }}", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ token: decodedText })
+      })
+      .then(r => r.json())
+      .then(data => {
+        document.getElementById("remaining").textContent = data.remaining ?? "-";
+
+        if (data.status === "ok") {
+          document.getElementById("status").textContent = "VALIDE";
+          try {
+            const dt = new Date(data.slot_time);
+            document.getElementById("details").textContent =
+              "Nom : " + data.name + " | Plage : " +
+              dt.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
+          } catch (e) {
+            document.getElementById("details").textContent =
+              "Nom : " + data.name + " | Slot time: " + data.slot_time;
+          }
+        } else {
+          document.getElementById("status").textContent = "INVALIDE / ERROR";
+          document.getElementById("details").textContent = data.message || "Unknown error.";
+        }
+      })
+      .catch(err => {
+        document.getElementById("status").textContent = "ERROR";
+        document.getElementById("details").textContent = err.toString();
+      });
+    }
+
+    function onScanFailure(error) {
+      // ignore continuous scan failures
+    }
+
+    const html5QrcodeScanner = new Html5QrcodeScanner(
+      "reader",
+      { fps: 10, qrbox: 250 },
+      false
+    );
+    html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+  </script>
+</body>
+</html>

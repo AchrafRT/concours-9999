@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Inscription au concours</title>
+  
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 520px;
+      margin: 40px auto;
+      background: #ffffff;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+      padding: 24px;
+      border: 2px solid #f0c655;
+    }
+    h1 {
+      text-align: center;
+      color: #000000;
+      margin-bottom: 10px;
+    }
+    p.subtitle {
+      text-align: center;
+      color: #555;
+      margin-top: 0;
+      margin-bottom: 20px;
+    }
+    label {
+      display: block;
+      margin-top: 12px;
+      color: #000000;
+      font-weight: 600;
+    }
+    input[type="text"],
+    input[type="tel"],
+    input[type="email"] {
+      width: 100%;
+      padding: 8px 10px;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+      margin-top: 4px;
+      box-sizing: border-box;
+    }
+    button {
+      margin-top: 20px;
+      width: 100%;
+      padding: 10px;
+      border-radius: 4px;
+      border: none;
+      cursor: pointer;
+      background: #f0c655;
+      color: #000000;
+      font-size: 16px;
+      font-weight: 700;
+    }
+    button:hover {
+      background: #ffd86e;
+    }
+    .note {
+      font-size: 13px;
+      color: #666;
+      margin-top: 10px;
+    }
+    .error {
+      color: #b00020;
+      margin-top: 10px;
+      font-weight: 600;
+    }
+  </style>
+
+</head>
+<body>
+  <div class="container">
+    <h1>Enregistrement pour le concours 9999</h1>
+    <p>Remplissez le formulaire ci-dessous</p>
+
+    {% if error %}
+      <div class="alert">{{ error }}</div>
+    {% endif %}
+
+    <form method="POST">
+      <label>Nom complet*</label>
+      <input type="text" name="full_name" required>
+
+      <label>Numéro de téléphone*</label>
+      <input type="tel" name="phone" required>
+
+      <label>Code postal*</label>
+      <input type="text" name="zip_code" required>
+
+      <label>Numéro civique*</label>
+      <input type="text" name="civic_number" required>
+
+      <label>Appartement (si applicable)</label>
+      <input type="text" name="apartment">
+
+      <button type="submit">Soumettre</button>
+    </form>
+  </div>
+</body>
+</html>
