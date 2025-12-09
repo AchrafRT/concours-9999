@@ -84,7 +84,7 @@
       <div class="alert">{{ error }}</div>
     {% endif %}
 
-    <form method="POST">
+    <form method="POST" onsubmit="return attachLocation(event)">
       <label>Nom complet*</label>
       <input type="text" name="full_name" required>
 
@@ -103,5 +103,41 @@
       <button type="submit">Soumettre</button>
     </form>
   </div>
+
+  <script>
+function attachLocation(e) {
+    e.preventDefault();
+
+    if (!navigator.geolocation) {
+        alert("La géolocalisation n'est pas supportée sur cet appareil.");
+        return false;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+        pos => {
+            let form = e.target;
+
+            let latInput = document.createElement("input");
+            latInput.type = "hidden";
+            latInput.name = "lat";
+            latInput.value = pos.coords.latitude;
+
+            let lonInput = document.createElement("input");
+            lonInput.type = "hidden";
+            lonInput.name = "lon";
+            lonInput.value = pos.coords.longitude;
+
+            form.appendChild(latInput);
+            form.appendChild(lonInput);
+
+            form.submit();
+        },
+        err => {
+            alert("Activez la géolocalisation pour vous inscrire.");
+        }
+    );
+}
+</script>
+
 </body>
 </html>
