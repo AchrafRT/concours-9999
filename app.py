@@ -156,8 +156,8 @@ def signup():
     # -----------------------------------------
     # GEO-LOCK: MUST BE AT SPECIFIC LOCATION
     # -----------------------------------------
-    TARGET_LAT = 46.77289
-    TARGET_LON = -71.298241
+    TARGET_LAT = 46.805894
+    TARGET_LON = -71.3330326
     MAX_DISTANCE_KM = 1.0  # 250 m radius
 
     user_lat = request.form.get("lat")
