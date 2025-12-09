@@ -148,9 +148,100 @@ def signup():
     apartment = request.form.get("apartment", "").strip().upper()
 
     if not (full_name and phone and zip_code and civic_number):
-        return render_template("signup.html",
-            error="Tous les champs obligatoires doivent être remplis."
+        return render_template(
+            "signup.html",
+            error="Tous les champs obligatoires doivent être remplis.",
         ), 400
+
+    # -----------------------------------------
+    # GEO-LOCK: MUST BE AT SPECIFIC LOCATION
+    # -----------------------------------------
+    TARGET_LAT = 46.801970
+    TARGET_LON = -71.294570
+    MAX_DISTANCE_KM = 0.25  # 250 m radius
+
+    user_lat = request.form.get("lat")
+    user_lon = request.form.get("lon")
+
+    def distance_km(lat1, lon1, lat2, lon2):
+        from math import radians, sin, cos, sqrt, atan2
+        R = 6371.0
+        dlat = radians(lat2 - lat1)
+        dlon = radians(lon2 - lon1)
+        a = sin(dlat/2)**2 + cos(radians(lat1)) * cos(radians(lat2)) * sin(dlon/2)**2
+        return 2 * R * atan2(sqrt(a), sqrt(1 - a))
+
+    if not user_lat or not user_lon:
+        return render_template(
+            "signup.html",
+            error="Vous devez être à « 2800 Ave Saint-Jean-Baptiste, Québec City, Quebec G2E 6J5 » pour vous inscrire.",
+        ), 400
+
+    try:
+        dist = distance_km(float(user_lat), float(user_lon), TARGET_LAT, TARGET_LON)
+    except Exception:
+        return render_template(
+            "signup.html",
+            error="Erreur de géolocalisation. Activez la localisation et réessayez.",
+        ), 400
+
+    if dist > MAX_DISTANCE_KM:
+        return render_template(
+            "signup.html",
+            error="Vous devez être à « 2800 Ave Saint-Jean-Baptiste, Québec City, Quebec G2E 6J5 » pour vous inscrire.",
+        ), 400
+
+    # -----------------------------------------
+    # CONTINUE NORMAL LOGIC
+    # -----------------------------------------
+    ensure_dirs()
+    participants = load_participants()
+
+    # ONE ENTRY PER HOUSEHOLD
+    new_household_key = f"{zip_code}|{civic_number}|{apartment}"
+
+    for p in participants:
+        if p.get("household_key") == new_household_key:
+            return render_template(
+                "signup.html",
+                error="Ce foyer est déjà inscrit.",
+            ), 400
+
+    slot_dt = next_available_slot(participants)
+    if slot_dt is None:
+        return render_template(
+            "signup.html",
+            error="Tous les créneaux sont complets.",
+        ), 400
+
+    token = uuid4().hex
+    qr_data_url = generate_qr_data_url(token)
+
+    participant = {
+        "id": uuid4().hex,
+        "token": token,
+        "full_name": full_name,
+        "phone": phone,
+        "email": email,
+        "zip_code": zip_code,
+        "civic_number": civic_number,
+        "apartment": apartment,
+        "household_key": new_household_key,
+        "slot_time": slot_dt.isoformat(),
+        "created_at": datetime.utcnow().isoformat(),
+        "checked_in": False,
+    }
+
+    participants.append(participant)
+    save_participants(participants)
+
+    return render_template(
+        "success.html",
+        participant=participant,
+        event_date=EVENT_DATE,
+        slot_local=slot_dt.strftime("%H:%M"),
+        qr_data_url=qr_data_url,
+    )
 
     ensure_dirs()
     participants = load_participants()
